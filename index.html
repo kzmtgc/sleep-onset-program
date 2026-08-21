@@ -222,8 +222,8 @@
   /* ---------- Ritual screen ---------- */
 
   #ritualScreen {
-    gap: 1.7rem;
-    justify-content: flex-start;
+    gap: 5vh;
+    justify-content: center;
     opacity: 0;
     transition: opacity 0.9s ease;
   }
@@ -233,8 +233,8 @@
   .ring-wrap {
     position: relative;
     z-index: 6;
-    width: 152px;
-    height: 152px;
+    width: clamp(150px, 44vw, 230px);
+    height: clamp(150px, 44vw, 230px);
     margin: 0;
     flex-shrink: 0;
     transition: filter 1.2s ease;
@@ -284,7 +284,7 @@
 
   .ring-number {
     font-family: var(--font-rounded);
-    font-size: 1.9rem;
+    font-size: 2.4rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: var(--label);
@@ -370,7 +370,7 @@
 
   .illust {
     width: 100%;
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 4 / 3;
     filter: none;
     transition: filter 7s ease;
   }
