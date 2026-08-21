@@ -1,0 +1,1003 @@
+<title>システムとしての眠り</title>
+<style>
+  :root {
+    --bg: linear-gradient(175deg, #f4eee0 0%, #ede4d2 100%);
+    --bg-solid: #ede4d2;
+    --surface: #ffffff;
+    --surface-2: #e4dfd1;
+    --label: #242320;
+    --label-2: #6b675e;
+    --label-3: #a6a196;
+    --separator: rgba(60, 50, 35, 0.12);
+    --accent: #2e8b75;
+    --accent-soft: #7b7fe0;
+    --accent-ink: #ffffff;
+    --track-off: #d8d2c4;
+
+    --font-sans: -apple-system, "SF Pro Text", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+      "Yu Gothic", "YuGothic", "Helvetica Neue", Arial, sans-serif;
+    --font-rounded: ui-rounded, -apple-system, "SF Pro Rounded", var(--font-sans);
+  }
+
+  .page.desaturated {
+    --bg-solid: #100b06;
+    --surface: #1c1c1e;
+    --surface-2: #2c2c2e;
+    --label: #ffffff;
+    --label-2: rgba(235, 235, 245, 0.6);
+    --label-3: rgba(235, 235, 245, 0.3);
+    --separator: rgba(84, 84, 88, 0.55);
+    --accent: #52c2ac;
+    --accent-soft: #8f8cf0;
+    --accent-ink: #06110e;
+    --track-off: #39393d;
+    filter: grayscale(1) brightness(0.86);
+  }
+
+  @property --accent { syntax: '<color>'; inherits: true; initial-value: #2e8b75; }
+  @property --accent-soft { syntax: '<color>'; inherits: true; initial-value: #7b7fe0; }
+  @property --surface-2 { syntax: '<color>'; inherits: true; initial-value: #e4dfd1; }
+  @property --label { syntax: '<color>'; inherits: true; initial-value: #242320; }
+  @property --label-3 { syntax: '<color>'; inherits: true; initial-value: #a6a196; }
+  @property --label-2 { syntax: '<color>'; inherits: true; initial-value: #6b675e; }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  .page {
+    background: var(--bg);
+    color: var(--label);
+    font-family: var(--font-sans);
+    height: 100vh;
+    height: 100dvh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    padding: calc(1.3rem + env(safe-area-inset-top)) calc(1.1rem + env(safe-area-inset-right))
+      calc(1.4rem + env(safe-area-inset-bottom)) calc(1.1rem + env(safe-area-inset-left));
+    overflow: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    filter: none;
+    transition: filter 7s ease;
+  }
+
+  .bg-dark-veil {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(175deg, #3d3020 0%, #241a10 45%, #100b06 100%);
+    transition: opacity 7s ease;
+  }
+
+  .bg-dark-veil.active { opacity: 1; }
+
+  .grain-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: 140px 140px;
+    transition: opacity 7s ease;
+  }
+
+  .grain-overlay.active { opacity: 0.06; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .item-card, .vision-creep, .ring-wrap, .sys-dialog, .bg-dark-veil, .grain-overlay, .card-dark-veil,
+    .page, .ring-track, .stop-a, .stop-b, .ring-number, .ring-total, .live-dot,
+    .item-eyebrow, .item-heading, .item-desc {
+      transition-duration: 0.3s !important;
+    }
+  }
+
+  .vision-creep {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 0;
+    pointer-events: none;
+    background: linear-gradient(to bottom, var(--bg-solid) 0%, var(--bg-solid) 6%, transparent 100%);
+    transition: height 9s linear;
+    z-index: 4;
+  }
+
+  .vision-creep.creeping { height: 75%; }
+
+  .vision-veil {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 2.6s ease;
+    background: radial-gradient(circle at 50% 40%, transparent 0%, transparent 24%, var(--bg-solid) 76%);
+    z-index: 5;
+  }
+
+  .vision-veil.active { opacity: 1; }
+
+  .live-dot {
+    position: fixed;
+    top: calc(1.1rem + env(safe-area-inset-top));
+    right: calc(1.3rem + env(safe-area-inset-right));
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    animation: livepulse 4.2s ease-in-out infinite;
+    transition: background 7s ease;
+    z-index: 10;
+  }
+
+  @keyframes livepulse {
+    0%, 100% { opacity: 0.28; }
+    50% { opacity: 0.75; }
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 26rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .screen[hidden] { display: none; }
+
+  /* ---------- Start screen ---------- */
+
+  #startScreen {
+    justify-content: center;
+    gap: 1.8rem;
+    text-align: center;
+    opacity: 1;
+    transition: opacity 0.8s ease;
+  }
+
+  #startScreen.leaving { opacity: 0; }
+
+  .program-logo {
+    width: 168px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    flex-shrink: 0;
+  }
+
+  .lead {
+    margin: 0;
+    text-align: center;
+    font-size: 1.0625rem;
+    line-height: 1.85;
+    color: var(--label-2);
+    max-width: 23em;
+    opacity: 0;
+    transition: opacity 2s ease;
+  }
+
+  .lead.visible { opacity: 1; }
+
+  .begin-btn {
+    appearance: none;
+    border: none;
+    width: 100%;
+    max-width: 20rem;
+    min-height: 50px;
+    border-radius: 25px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    touch-action: manipulation;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.9s ease, transform 0.2s ease;
+  }
+
+  .begin-btn.visible { opacity: 1; pointer-events: auto; }
+
+  .begin-btn:active { opacity: 0.75; transform: scale(0.98); }
+
+  .begin-btn:focus-visible {
+    outline: 2px solid var(--accent-soft);
+    outline-offset: 3px;
+  }
+
+  /* ---------- Ritual screen ---------- */
+
+  #ritualScreen {
+    gap: 0.9rem;
+    justify-content: flex-start;
+    opacity: 0;
+    transition: opacity 0.9s ease;
+  }
+
+  #ritualScreen.entering { opacity: 1; }
+
+  .ring-wrap {
+    position: relative;
+    z-index: 6;
+    width: 96px;
+    height: 96px;
+    margin: 0;
+    flex-shrink: 0;
+    transition: filter 1.2s ease;
+    animation: ringBreathe 6s ease-in-out infinite;
+  }
+
+  @keyframes ringBreathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.035); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ring-wrap { animation: none; }
+  }
+
+  .ring-wrap.glow {
+    filter: drop-shadow(0 0 12px rgba(143, 140, 240, 0.45)) drop-shadow(0 0 24px rgba(82, 194, 172, 0.22));
+  }
+
+  .ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+  .ring-track {
+    fill: none;
+    stroke: var(--surface-2);
+    stroke-width: 7;
+    transition: stroke 7s ease;
+  }
+
+  .ring-fill {
+    fill: none;
+    stroke: url(#ringGradient);
+    stroke-width: 7;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .stop-a { stop-color: var(--accent); transition: stop-color 7s ease; }
+  .stop-b { stop-color: var(--accent-soft); transition: stop-color 7s ease; }
+
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ring-number {
+    font-family: var(--font-rounded);
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--label);
+    letter-spacing: -0.02em;
+    transition: opacity 1.4s ease, color 7s ease;
+  }
+
+  .ring-number.fading { opacity: 0; }
+
+  .ring-total {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--label-3);
+    transition: color 7s ease;
+  }
+
+  .dialog-stack {
+    position: relative;
+    z-index: 6;
+    width: 100%;
+    height: 0;
+    flex-shrink: 0;
+  }
+
+  .sys-dialog {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    max-width: 15.5rem;
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 1.15rem 1.4rem;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.55;
+    letter-spacing: 0.01em;
+    color: var(--label);
+    text-align: center;
+    transition: color 7s ease, background 7s ease;
+  }
+
+  .card-stage {
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .item-card {
+    position: relative;
+    width: 100%;
+    background: linear-gradient(165deg, #ffffff 0%, #fbf8f1 100%);
+    box-shadow: 0 1px 2px rgba(60, 50, 30, 0.06), 0 14px 32px -16px rgba(60, 50, 30, 0.24);
+    border-radius: 18px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 2.1s ease, transform 2.1s ease, background 0.6s ease, box-shadow 0.6s ease;
+  }
+
+  .page.desaturated .item-card {
+    background: linear-gradient(165deg, #242019 0%, #1a1712 65%, #141210 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  .card-dark-veil {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    border-radius: 18px;
+    opacity: 0;
+    background: linear-gradient(165deg, #242019 0%, #1a1712 65%, #141210 100%);
+    transition: opacity 1.5s ease;
+  }
+
+  .card-dark-veil.active { opacity: 1; }
+
+  .item-card.entering { opacity: 1; transform: translateY(0); }
+  .item-card.leaving { opacity: 0; transform: translateY(-6px); transition: opacity 1.5s ease, transform 1.5s ease; }
+
+  .illust {
+    width: 100%;
+    aspect-ratio: 16 / 7;
+    filter: none;
+    transition: filter 7s ease;
+  }
+
+  .page.desaturated .illust {
+    filter: brightness(1.55) contrast(1.05);
+  }
+
+  .illust-0 {
+    background-color: #dceae3;
+    background-image: url('illustrations/00.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  .illust-1 {
+    background-color: #9aa39a;
+    background-image: url('illustrations/01.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  .illust-2 {
+    background-color: #d8d2c4;
+    background-image: url('illustrations/02.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  .illust-3 {
+    background-color: #2c261e;
+    background-image: url('illustrations/03.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  .illust-4 {
+    background-color: #2a2836;
+    background-image: url('illustrations/04.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  .illust-5 {
+    background-color: #362c1f;
+    background-image: url('illustrations/05.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  .illust-6 {
+    background-color: #352c22;
+    background-image: url('illustrations/06.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  .illust-7 {
+    background-color: #2a251d;
+    background-image: url('illustrations/07.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  .illust-8 {
+    background-color: #1e1a15;
+    background-image: url('illustrations/08.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  .illust-9 {
+    background-color: #14110c;
+    background-image: url('illustrations/09.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+
+  .item-body { padding: 0.9rem 1.1rem 0.1rem; transition: filter 1.8s ease; }
+
+  .item-body.blurred .item-heading,
+  .item-body.blurred .item-desc {
+    filter: blur(2.6px);
+    letter-spacing: 0.02em;
+  }
+
+  .item-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    transition: color 7s ease;
+  }
+
+  .item-heading {
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 0.35rem 0 0;
+    text-wrap: balance;
+    color: var(--label);
+    transition: filter 1.6s ease, color 7s ease;
+  }
+
+  .item-desc {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 0.45rem 0 0;
+    color: var(--label-2);
+    transition: filter 1.6s ease, color 7s ease;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    min-height: 44px;
+    margin-top: 0.7rem;
+    padding: 0.8rem 1.2rem;
+    border-top: 1px solid var(--separator);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .ripple {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    margin-top: -5px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    opacity: 0.35;
+    pointer-events: none;
+    animation: rippleExpand 0.9s ease-out forwards;
+    z-index: 2;
+  }
+
+  @keyframes rippleExpand {
+    to { width: 150px; height: 150px; margin-left: -75px; margin-top: -75px; opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ripple { animation: none; opacity: 0; }
+  }
+
+  .switch-label {
+    font-family: var(--font-rounded);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    width: 2rem;
+    color: var(--label-3);
+    transition: color 0.35s ease;
+  }
+
+  .switch-label.off { text-align: right; }
+  .switch-label.on { text-align: left; }
+
+  .toggle-row[aria-checked="true"] .switch-label.on { color: var(--accent); }
+  .toggle-row[aria-checked="false"] .switch-label.off { color: var(--label-2); }
+
+  .toggle-row:focus-visible {
+    outline: 2px solid var(--accent-soft);
+    outline-offset: -2px;
+  }
+
+  .switch {
+    background: var(--track-off);
+    width: 51px;
+    height: 31px;
+    border-radius: 999px;
+    position: relative;
+    transition: background 0.35s ease;
+    flex-shrink: 0;
+  }
+
+  .toggle-row[aria-checked="true"] .switch { background: var(--accent); }
+
+  .switch .knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .toggle-row[aria-checked="true"] .switch .knob { transform: translateX(20px); }
+
+  .no-touch-feedback .toggle-row:active { opacity: 1; }
+  .no-touch-feedback .switch,
+  .no-touch-feedback .switch .knob {
+    transition: none !important;
+  }
+
+  .no-focus-ring *:focus-visible { outline: none !important; }
+</style>
+
+<div class="page" id="page">
+  <div class="bg-dark-veil" id="bgDarkVeil"></div>
+  <div class="grain-overlay" id="grainOverlay"></div>
+  <div class="live-dot" aria-hidden="true"></div>
+
+  <div class="screen" id="startScreen">
+    <svg class="program-logo" xmlns="http://www.w3.org/2000/svg" width="752.570011" height="1024" viewBox="13.999126 7.507346 36.000874 48.985336" role="img" aria-label="Logo" shape-rendering="geometricPrecision"><path d="M 22.962617 9.353223 A 14.610803 14.610803 0 0 0 17.28998 22.476363 A 15.004785 15.004785 0 0 0 22.999976 32.78208 A 14.411813 14.411813 0 0 0 33.529063 35.820773 A 14.859112 14.859112 0 0 0 41.03118 9.318264 A 25.072881 25.072881 0 0 1 48.753799 14.511595 A 23.596474 23.596474 0 0 1 55.812484 31.322138 A 22.12146 22.12146 0 0 1 54.577286 38.615422 A 24.298738 24.298738 0 0 1 42.15117 52.498418 A 23.159068 23.159068 0 0 1 24.44155 53.548414 A 24.177696 24.177696 0 0 1 10.475749 41.020818 A 23.13535 23.13535 0 0 1 9.643088 23.28653 A 24.00266 24.00266 0 0 1 22.934452 9.311332 L 22.962617 9.353223 Z" transform="matrix(0.5047599249736984 0 0 0.5047599249736984 15.828094508714418 2.8073584709495876)" fill="#4a4636" fill-rule="nonzero"/><path d="M 39.631008 25.771425 A 7.594636 7.594636 0 0 1 24.441736 25.771425 A 7.594636 7.594636 0 0 1 39.631008 25.771425 Z" transform="matrix(0.5047599249736984 0 0 0.5047599249736984 15.828094508714418 2.8073584709495876)" fill="#4a4636" fill-rule="nonzero"/><path d="M42.451055 18.744953C43.742227 18.66038 43.611523 19.98729 43.615078 20.861988L43.614805 22.549918 43.613165 28.340941 43.612616 38.741055 43.614805 42.08875C43.616172 42.716836 43.626289 43.34711 43.608789 43.974922 43.58965 44.648945 43.420391 45.179414 42.687852 45.300547 41.319297 45.395157 41.518086 44.043555 41.490742 43.09828 41.476523 42.601445 41.489102 42.092305 41.489102 41.594648L41.489922 36.144218 41.491836 25.545837 41.491836 22.10818C41.491836 21.436125 41.48664 20.76612 41.50332 20.094094 41.52082 19.394559 41.67996 18.878883 42.451055 18.744954 M42.356992 19.342633C42.773711 19.313129 42.963477 19.361883 43.023632 19.81743 43.045235 19.982504 43.063829 20.135273 43.064923 20.303875 43.07668 22.154527 43.071758 24.005699 43.071758 25.856461L43.071758 36.556289 43.072852 41.723437C43.073398 42.53336 43.103203 43.46004 43.028282 44.26586 43.00996 44.464102 42.902226 44.604102 42.740624 44.71375 42.644375 44.725508 42.550585 44.736172 42.454062 44.720313 42.335665 44.700898 42.22547 44.646758 42.157657 44.544766 41.950664 44.234414 42.03625 41.004023 42.03625 40.326172L42.040898 25.083562 42.038711 21.506044C42.03789 20.944348 42.011914 20.26882 42.082188 19.713031 42.102422 19.554164 42.223828 19.428465 42.356992 19.342633 M22.502477 18.747004C23.935398 18.67971 23.691247 20.143887 23.694035 21.139227L23.698765 23.068793 23.696989 31.39543 23.706066 39.68086C23.708828 41.081952 23.719711 42.48496 23.705602 43.88578 23.699094 44.532461 23.601504 45.108594 22.894942 45.292891 21.486272 45.382578 21.6088 44.29293 21.59018 43.260156 21.581047 42.75457 21.58966 42.243516 21.58955 41.737656L21.589634 36.36297 21.593707 25.711922 21.592504 22.165192C21.59234 21.443698 21.585204 20.714933 21.610797 19.994644 21.62094 19.70975 21.67541 19.379137 21.841852 19.143816 22.021938 18.88922 22.212687 18.806777 22.502477 18.747004 M22.455281 19.34523C22.66602 19.330766 22.857727 19.301098 23.002813 19.482605 23.13018 19.641938 23.141227 19.942691 23.142129 20.138801 23.15044 21.960797 23.148172 23.782875 23.147105 25.604844L23.146121 36.401524 23.147898 41.67203 23.154543 43.191797C23.157003 43.643516 23.255113 44.428828 22.858164 44.709375 22.63906 44.732891 22.424547 44.759415 22.292641 44.55543 22.168035 44.362656 22.159832 43.956875 22.159148 43.736484 22.15316 41.809844 22.155868 39.88293 22.156278 37.956016L22.157617 26.754786 22.156331 22.015812C22.15491 21.295906 22.127703 20.44948 22.188406 19.731953 22.203555 19.552852 22.312738 19.442574 22.455281 19.34523 M54.979414 18.90207 55.763086 18.894414 55.927148 45.15207 55.338438 45.151797 55.328868 22.996387C55.332967 22.843453 55.355117 22.520633 55.282382 22.390914 55.198164 22.58727 55.164805 25.719441 55.151953 26.15481L54.947422 32.424102C54.800859 36.59293 54.633516 40.760938 54.445117 44.927852L53.887578 44.929219 53.025977 22.684422C53.022148 22.594132 53.021055 22.502285 52.981953 22.421457 52.921523 22.496187 52.925078 22.639332 52.924531 22.738262L52.977305 45.152344 52.406094 45.150977 52.42168 40.135039 52.478008 29.020734 52.504805 22.47497C52.508359 21.33055 52.477188 20.031395 52.523672 18.902617L53.29668 18.897477C53.299414 19.64243 53.350547 20.476469 53.37953 21.22514L53.546055 25.395199 53.995859 36.406992 54.112891 39.792148C54.12492 40.209414 54.0891 41.370977 54.19492 41.670664 54.219532 41.636758 54.275314 38.634688 54.284884 38.334727L54.617109 28.878574C54.713633 25.552234 54.834492 22.22666 54.979414 18.90207 M47.659219 18.888207C48.450547 18.869695 48.929609 19.071984 48.987579 19.955051 49.025312 20.527738 49.005624 21.111883 49.005624 21.686594L49.003985 24.708406 49.006444 27.865078C49.007265 28.297547 49.013281 28.731684 49.005625 29.164098 48.996055 29.720844 48.974453 30.129278 48.452735 30.437878 48.752968 30.644899 48.85496 30.843935 48.885584 31.206403 48.93836 31.832656 48.9225 32.466211 48.926329 33.094844L48.95504 35.906602C48.971992 38.988789 49.012188 42.070703 49.075352 45.152344L48.503594 45.15207C48.432227 41.864805 48.439609 38.524492 48.398047 35.232031L48.374805 32.730898C48.371797 32.372148 48.37371 31.563047 48.322578 31.23782 48.256953 30.657586 47.887812 30.701062 47.421875 30.71613L47.423515 45.148789 46.870899 45.149336C46.853945 44.238516 46.869805 43.270273 46.869531 42.35453L46.867891 36.744687 46.870898 18.899992z M47.422148 19.459363C47.802773 19.451598 48.315742 19.36973 48.384922 19.85686 48.45875 20.37683 48.43414 20.89677 48.43414 21.421223L48.434414 23.98768 48.43332 27.622074C48.432773 28.265364 48.44125 28.923117 48.419648 29.565641 48.41336 29.754148 48.363047 29.873559 48.258868 30.026219 48.024804 30.204199 47.719101 30.163156 47.430624 30.156566 47.385508 28.89922 47.421875 27.403106 47.421328 26.124074z M38.80668 18.899309C39.387188 18.891434 40.557227 18.75444 40.768047 19.392152 40.981328 20.037164 40.914883 21.19047 40.915157 21.885355L40.914882 24.931723 40.91789 27.713238C40.91871 28.181118 40.922266 28.651375 40.918984 29.119062 40.914883 29.700746 40.925274 30.137727 40.351875 30.428664 40.698047 30.692996 40.795938 30.87907 40.818359 31.32729 40.84215 31.79875 40.832305 32.278906 40.839141 32.751953L40.876055 35.898398 40.98953 45.164375 40.394805 45.153985 40.294727 35.21289C40.278047 34.141563 40.286523 33.080898 40.260273 32.006836 40.258906 31.674609 40.28379 31.070066 40.028398 30.837645 39.82332 30.651188 39.59418 30.690699 39.344531 30.703906 39.297227 32.28082 39.337421 34.026172 39.339063 35.617578L39.346445 45.166562 38.80586 45.15672z M39.421367 19.463027C39.851211 19.44848 40.281328 19.39907 40.323164 19.955817 40.371016 20.589397 40.357617 21.231921 40.357891 21.867034L40.357617 25.288012 40.353242 28.200012C40.351328 28.671199 40.359805 29.184715 40.326992 29.655355 40.316875 29.800332 40.224453 29.948645 40.137227 30.061738 39.908633 30.200535 39.613047 30.158808 39.35082 30.146422A507.046624 507.046624 0 0 1 39.336875 22.195242L39.327578 20.418992C39.326484 20.253125 39.313906 19.624027 39.345352 19.48452z M24.366254 18.905734 25.038473 18.903191 25.970566 34.69254 26.24231 38.758555C26.258797 39.016133 26.294262 40.159648 26.326773 40.319063L26.369348 40.339843 26.413672 40.312774C26.445008 40.202031 26.39371 39.123047 26.390594 38.92672L26.346954 35.114453 26.260737 25.216645A290.091271 290.091271 0 0 1 26.223633 18.914703L26.78798 18.908633 26.808242 45.161914C26.602098 45.160547 26.39259 45.154531 26.186172 45.150704 26.135859 43.61453 25.98607 41.898163 25.88323 40.352968L25.360473 32.158867 24.965219 25.52429C24.932625 24.991688 24.902848 24.458922 24.87594 23.925992 24.86156 23.613727 24.906457 23.320574 24.789234 23.02406L24.760797 23.027887C24.732359 23.143359 24.751664 24.061645 24.753633 24.256305L24.806543 27.914488 24.910695 45.151523 24.317473 45.15125z M36.886602 18.887934C38.422227 18.852277 38.238477 19.866813 38.23793 21.035704L38.235742 22.97194 38.234922 29.270875C38.231914 29.639277 38.244766 29.922531 38.125547 30.274719 37.878907 31.002117 37.215547 30.922109 36.601407 30.916312 36.566132 32.45336 36.597304 34.113673 36.597577 35.65832L36.600313 44.291016 36.597852 45.153437 36.051797 45.150158C36.008867 41.124882 36.048242 37.037812 36.049062 33.00625L36.061915 18.901441z M36.839844 19.461852C37.08457 19.4633 37.418164 19.433059 37.559804 19.670922 37.62625 19.782566 37.656603 20.101012 37.658243 20.237156 37.666172 20.961273 37.66207 21.685937 37.662344 22.410082L37.663164 26.64459 37.663164 28.756102C37.662891 29.119062 37.680664 29.560637 37.630078 29.91709 37.603555 30.105133 37.519336 30.203625 37.367852 30.304988 37.184102 30.359895 36.807852 30.34975 36.6025 30.348902L36.597031 22.550984 36.595391 20.461102C36.595117 20.277516 36.583086 19.660504 36.609336 19.505902 36.689453 19.441863 36.708867 19.465324 36.839844 19.461852 M17.501195 18.902234C18.648675 18.88356 19.644945 18.657454 19.650825 20.206887 19.653394 20.885969 19.656894 21.596605 19.656401 22.277902L19.658836 25.966382 19.66127 28.36793C19.661707 28.989125 19.771656 30.21675 19.303969 30.684055 19.024789 30.963015 18.432387 30.915465 18.049355 30.916477 18.034672 32.243907 18.05354 33.606172 18.053922 34.937812L18.05671 43.552735 18.055316 45.15125 17.482766 45.149883C17.550879 42.008086 17.502398 38.71125 17.50278 35.559336z M18.096742 19.46166C18.360692 19.45827 18.983472 19.400766 19.037504 19.784863 19.12093 20.378141 19.090332 21.015961 19.088527 21.616785L19.08831 24.441012 19.0888 27.878312C19.089129 28.500274 19.10075 29.141677 19.072695 29.762243 19.063835 29.958023 19.017352 30.089766 18.906172 30.248742 18.686 30.384395 18.321754 30.353442 18.05414 30.353934L18.050449 23.378598C18.049875 22.14266 18.048098 20.901227 18.051105 19.664988 18.051352 19.558703 18.042273 19.525781 18.096742 19.46166 M50.33371 18.906309 51.167696 18.900074C51.168242 19.443804 51.205703 20.049934 51.223203 20.598668L51.366758 24.79134 51.826953 40.393164C51.866875 41.951211 51.978711 43.61207 51.990195 45.15207L51.434844 45.151523C51.379883 44.295938 51.210352 35.633711 51.132969 35.530078 50.862812 35.527891 50.592656 35.528438 50.3225 35.531172 50.258242 36.659922 50.248398 37.940156 50.213945 39.07875 50.146133 41.104375 50.089805 43.130273 50.044687 45.156445L49.455978 45.156172C49.69578 39.160782 49.898672 33.164023 50.065195 27.166418 50.14668 24.434449 50.199727 21.630594 50.333711 18.906308 M50.717344 21.099031 50.783516 21.15886C50.831367 21.99443 50.825625 23.035324 50.836289 23.87847L50.90629 27.066969C50.971367 29.715047 51.106992 32.362579 51.146641 35.011914L50.771484 35.013828 50.346016 35.011641C50.343008 33.861016 50.399063 32.654336 50.433242 31.498789L50.60797 25.46963C50.637773 24.372105 50.685079 23.280187 50.680977 22.181734 50.679883 21.865804 50.666484 21.403313 50.717344 21.099031 M45.062383 18.743094C45.780703 18.703554 46.20043 19.012375 46.250469 19.74002 46.30789 20.57816 46.282734 21.432926 46.28246 22.274074L46.2975 27.124445C46.111836 27.130707 45.91332 27.129066 45.72629 27.130735L45.72328 22.179874C45.723555 21.444793 45.729844 20.708508 45.72711 19.974957 45.718086 19.680055 45.624844 19.337465 45.277031 19.323711 44.667266 19.29962 44.76297 20.096008 44.76379 20.499793 44.76461 20.873719 44.769805 21.247563 44.769805 21.621215L44.76953 26.282066 44.768984 37.933867C44.768438 39.900157 44.764062 41.87082 44.768984 43.83711 44.776641 44.09004 44.778828 44.35418 44.916914 44.574844 45.08672 44.861133 45.444102 44.77828 45.599961 44.525898 45.787813 44.22129 45.728203 43.74332 45.727109 43.392227L45.722734 41.841016 45.721641 36.689453 45.725469 30.605387 45.179688 30.605195 45.18078 30.048887 46.26961 30.049789 46.276445 39.391562 46.28629 42.17379C46.29258 42.96375 46.39758 44.15293 46.094336 44.861406 45.793828 45.563594 44.40668 45.398711 44.286367 44.60793 44.15922 43.773945 44.208984 42.828398 44.208984 41.98703L44.208164 37.210898 44.209804 25.98741C44.210079 24.024703 44.19586 22.061668 44.216095 20.09918 44.222656 19.457066 44.36293 18.921402 45.062383 18.743094 M28.359262 18.743805A1.673501 1.673501 0 0 1 28.45584 18.740688C29.687867 18.740468 29.523996 19.978676 29.523203 20.857094L29.516941 22.579504C29.512266 24.089864 29.540621 25.623355 29.522574 27.129066L28.961644 27.132348C28.932606 24.975609 28.980349 22.810258 28.965365 20.654094 28.963311 20.358043 29.020104 19.494445 28.714565 19.380066 27.919191 19.082266 28.003711 20.025516 28.003328 20.41634L28.004832 23.435035C28.005652 24.555828 28.004613 25.68745 28.109859 26.80518 28.329402 29.136645 28.96665 31.361797 29.260402 33.691758 29.613273 36.41875 29.531324 39.156133 29.541195 41.902266 29.543438 42.526796 29.66375 44.377969 29.336965 44.88246 28.901925 45.554297 27.747719 45.49496 27.498945 44.468477 27.421508 44.053125 27.433457 43.447734 27.432965 43.015703L27.432938 41.27172 27.436602 34.971445C27.625465 34.961875 27.81605 34.967344 28.00527 34.969805L28.004395 41.25039 28.004422 43.163906C28.005105 43.495313 27.998242 43.827266 28.019187 44.158125 28.040845 44.500742 28.21456 44.794141 28.600052 44.716211 29.031973 44.62871 28.99134 44.005273 28.993336 43.670859 28.98319 42.462266 28.998012 41.251211 28.989043 40.042617 28.977914 38.539531 28.981305 37.029883 28.861293 35.531445 28.791895 34.639765 28.686593 33.751641 28.545664 32.868711 28.266566 31.206867 27.859063 29.54352 27.649774 27.87287 27.401546 25.838305 27.432417 23.787551 27.434523 21.738738 27.435315 20.977215 27.318913 19.843215 27.677034 19.161344 27.810965 18.906364 28.08968 18.798656 28.359262 18.743804 M9.034613 18.744598 9.059605 18.743148C9.676344 18.71329 10.106816 19.02323 10.162871 19.644207 10.242687 20.528613 10.206977 21.452121 10.20468 22.341176L10.207879 27.127453 9.65641 27.13336C9.646566 25.50061 9.64684 23.867805 9.657176 22.235055 9.658898 21.571777 9.662809 20.919246 9.655098 20.245195 9.652008 19.788117 9.612578 19.171297 8.973308 19.359094 8.645349 19.47771 8.672966 20.05368 8.67827 20.32821 8.721418 22.56657 8.590059 24.87337 8.808945 27.103609 9.007488 29.12672 9.59866 31.13427 9.875133 33.15172A35.715365 35.715365 0 0 1 10.159809 36.133008C10.252805 37.80918 10.233062 39.558086 10.234977 41.238359L10.238668 43.004492C10.239762 43.658008 10.359062 44.953008 9.588598 45.236562 8.886656 45.495234 8.34298 45.164103 8.161992 44.45043 8.08573 43.951406 8.101234 43.445 8.101207 42.94078L8.10241 41.130351 8.106922 34.968439C8.294199 34.964883 8.48771 34.96707 8.675562 34.966797L8.677533 41.32668 8.673538 43.128906C8.6722 43.660196 8.505758 44.905156 9.318195 44.708828 9.673992 44.622968 9.686461 44.069258 9.684055 43.780508 9.660156 40.892734 9.742078 37.993203 9.516383 35.112539 9.33132 32.710117 8.674003 30.409168 8.341285 28.031383 8.043375 25.69784 8.136645 23.336898 8.11332 20.989984 8.107031 20.357605 8.0253 19.384414 8.535371 18.941364 8.67909 18.816511 8.854992 18.781155 9.034613 18.744597 M15.26721 18.89816A64.91076 64.91076 0 0 1 17.021505 18.89898L17.026809 19.45097A38.282118 38.282118 0 0 0 15.815918 19.469699L15.824613 30.09756 16.922383 30.099363 16.9188 30.60845A47.66333 47.66333 0 0 0 15.817914 30.61977C15.79213 32.130157 15.821578 33.72457 15.823301 35.240509L15.826363 44.05996 15.823 44.58578 17.016719 44.601094 17.020329 45.15289 15.262616 45.152617 15.273828 29.850207 15.278723 23.111176C15.290836 21.706856 15.28698 20.302398 15.26721 18.89816 M10.81059 18.901441 11.38169 18.90002 11.38038 44.58961C11.77544 44.595077 12.17053 44.59836 12.56562 44.59918L12.5785 45.15453 10.810945 45.151797z M30.135566 18.8992A78.222332 78.222332 0 0 1 31.899648 18.89991L31.902656 19.451215A99.949054 99.949054 0 0 0 30.671148 19.45857C30.648234 20.637004 30.669398 21.9025 30.668414 23.08561L30.681594 30.09753 31.77414 30.097176 31.775508 30.608914A107.42028 107.42028 0 0 0 30.672844 30.615066C30.630078 32.237344 30.666227 34.04586 30.666336 35.678008L30.67771 43.988047 30.67935 44.590157 31.890626 44.594256 31.895 45.157813 30.137945 45.152345z M13.014277 18.899117C13.585734 18.889602 14.17748 18.895344 14.750441 18.893785L14.750387 19.455316A39.251475 39.251475 0 0 0 13.540043 19.461824L13.544773 30.102043C13.895813 30.10948 14.284148 30.095727 14.638031 30.089711L14.637101 30.608832 13.53977 30.613645 13.543242 44.126953 13.544828 44.593711C13.941641 44.60492 14.371895 44.597813 14.771332 44.59918L14.770812 45.153164 13.02166 45.150977z M32.235977 18.893129 34.27582 18.889684 34.282656 19.460074A23.254211 23.254211 0 0 0 33.505 19.470711C33.465898 22.273117 33.501445 25.173879 33.501172 27.981645L33.501719 44.403125 33.49707 45.161367 32.960586 45.156172 32.960859 19.472816 32.225586 19.462781z" transform="matrix(0.7527094529031209 0 0 0.7527094529031209 7.903107026488129 22.37625910204137)" fill="#4a4636" fill-rule="evenodd"/></svg>
+    <p class="lead" id="leadText" aria-live="polite"></p>
+    <button class="begin-btn" id="beginBtn" type="button">はじめる</button>
+  </div>
+
+  <div class="screen" id="ritualScreen" hidden>
+    <div class="vision-creep" id="visionCreep"></div>
+    <div class="vision-veil" id="visionVeil"></div>
+
+    <div class="ring-wrap" id="ringWrap">
+      <svg class="ring" viewBox="0 0 120 120">
+        <defs>
+          <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop class="stop-a" offset="0%"></stop>
+            <stop class="stop-b" offset="100%"></stop>
+          </linearGradient>
+        </defs>
+        <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+        <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-number" id="ringNumberWrap"><span id="ringNumber">0</span><span class="ring-total">/10</span></div>
+      </div>
+    </div>
+
+    <div class="dialog-stack" id="dialogStack"></div>
+
+    <div class="card-stage" id="cardStage"></div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var ITEMS = [
+      {
+        img: 0,
+        title: '明るさ',
+        key: 'brightness',
+        heading: 'まずは夜の闇に<br>目をなじませましょう',
+        body: 'スマートフォンの明るさを下げるか、ナイトモードに変更してください。変更できたら、トグルを操作してください。'
+      },
+      {
+        img: 2,
+        title: '色彩',
+        key: 'color',
+        heading: '色彩感覚を手放し<br>感覚を休ませましょう',
+        body: '一日を過ごしたあなたは、広告やガジェットの色彩で疲労しています。トグルを操作して、色彩の感覚をスリープさせましょう。'
+      },
+      {
+        img: 3,
+        title: '視野',
+        key: 'vision',
+        heading: '少しずつ、夜の闇に身を任せて。',
+        body: '視界の端から、ゆっくりと闇が忍び寄ってくるのを感じてみてください。ゆっくりで構いません。まぶたが重くなるのを感じたら、トグルを操作して視野のスリープを完了させてください。既にあなたはトグルを見なくても操作を続けられるようになっているはずです！',
+        onShow: function (ctx) { ctx.visionCreep.classList.add('creeping'); }
+      },
+      {
+        img: 4,
+        title: '思考',
+        key: 'thought',
+        heading: '今日という日は終わります。徐々に思考を停止させて。',
+        body: '静寂に包まれながら、あなたは考えることをやめます。明日また起きて生活するために、今は脳を休ませて。考えてしまいそうでも、トグルをオフにすれば脳が活動をやめるはずです。'
+      },
+      {
+        img: 5,
+        title: '触覚',
+        key: 'touch',
+        heading: 'あなたの輪郭が、夜に融けていきます。',
+        body: '触れているものの輪郭が、少しずつ曖昧になっていきます。手応えが遠くなったと感じたら、トグルを操作して触覚をスリープしてください。'
+      },
+      {
+        img: 1,
+        title: '聴覚',
+        key: 'hearing',
+        heading: 'ゆっくりと耳の感覚を<br>手放しましょう',
+        body: '静寂に耳を澄ませ、心を落ち着かせてみましょう。心が静かになったのを感じたら、トグルを操作して耳の機能をスリープさせてください。'
+      },
+      {
+        img: 6,
+        title: '言語',
+        key: 'language',
+        heading: '言葉になる前の場所へ、戻っていきましょう。',
+        body: '頭に浮かぶ言葉は、徐々に意味を結ばなくなります。この文字も意味が崩壊し、ただの模様にしか見えなくなります。トグルを押して。意味をスリープさせてください。'
+      },
+      {
+        img: 7,
+        title: '記憶',
+        key: 'memory',
+        heading: 'あなた自身を、<br>静かに手放しましょう',
+        body: '今日という一日を、ひとつずつ手放していくように。何も持たずに、ここにいると感じたら、トグルを操作して記憶をスリープさせてください。'
+      },
+      {
+        img: 8,
+        title: '自我',
+        key: 'self',
+        heading: '「わたし」という輪郭を、そっと手放しましょう。',
+        body: 'ここまで進んできたのが誰だったか、もう思い出さなくて大丈夫です。手放す準備ができたら、トグルを操作してください。'
+      },
+      {
+        img: 9,
+        title: '視覚',
+        key: 'sight',
+        heading: '目を閉じて。',
+        body: '目を閉じて。'
+      }
+    ];
+    var TOTAL = ITEMS.length;
+
+    var LEAD_LINES = [
+      '一日おつかれさまでした。',
+      '明日のために、',
+      'あなたのスリープをサポートします。',
+      '寝転がってイヤホンを繋いだら、',
+      'あなた自身のスリープを',
+      'はじめてください。'
+    ];
+
+    var page = document.getElementById('page');
+    var bgDarkVeil = document.getElementById('bgDarkVeil');
+    var grainOverlay = document.getElementById('grainOverlay');
+    var startScreen = document.getElementById('startScreen');
+    var ritualScreen = document.getElementById('ritualScreen');
+    var beginBtn = document.getElementById('beginBtn');
+    var leadText = document.getElementById('leadText');
+    var cardStage = document.getElementById('cardStage');
+    var ringWrap = document.getElementById('ringWrap');
+    var ringFill = document.getElementById('ringFill');
+    var ringNumber = document.getElementById('ringNumber');
+    var ringNumberWrap = document.getElementById('ringNumberWrap');
+    var visionVeil = document.getElementById('visionVeil');
+    var visionCreep = document.getElementById('visionCreep');
+    var dialogStack = document.getElementById('dialogStack');
+
+    var R = 52;
+    var CIRC = 2 * Math.PI * R;
+    ringFill.style.strokeDasharray = String(CIRC);
+    ringFill.style.strokeDashoffset = String(CIRC);
+
+    var completedCount = 0;
+    var memoryOff = false;
+    var languageOff = false;
+    var hapticOff = false;
+    var soundEnabled = true;
+    var audioCtx = null;
+    var noiseSource = null;
+    var noiseGain = null;
+    var pulseOsc = null;
+
+    var CARD_GAP_MS = 1950;
+
+    function updateRing() {
+      var cappedFraction = (completedCount / TOTAL) * 0.97;
+      ringFill.style.strokeDashoffset = String(CIRC * (1 - cappedFraction));
+      if (!memoryOff) {
+        ringNumber.textContent = String(completedCount);
+      }
+    }
+
+    var dialogOffsets = [
+      { x: 0, y: 0, scale: 1 },
+      { x: 10, y: 16, scale: 0.97 },
+      { x: 20, y: 32, scale: 0.94 }
+    ];
+    var dialogCount = 0;
+
+    function spawnDialog(text, ringSpeed) {
+      var offset = dialogOffsets[Math.min(dialogCount, dialogOffsets.length - 1)];
+      dialogCount += 1;
+
+      var el = document.createElement('div');
+      el.className = 'sys-dialog';
+      el.textContent = text;
+      el.style.transform = 'translate(calc(-50% + ' + offset.x + 'px), ' +
+        offset.y + 'px) scale(' + offset.scale + ')';
+      dialogStack.appendChild(el);
+
+      if (ringSpeed) {
+        ringWrap.style.animationDuration = ringSpeed;
+      }
+    }
+
+    function startAudio() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      var bufferSeconds = 4;
+      var bufferSize = audioCtx.sampleRate * bufferSeconds;
+      var noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      var data = noiseBuffer.getChannelData(0);
+      var lastSample = 0;
+      for (var i = 0; i < bufferSize; i++) {
+        var white = Math.random() * 2 - 1;
+        lastSample = (lastSample + 0.04 * white) / 1.04;
+        data[i] = lastSample * 3.2;
+      }
+
+      noiseSource = audioCtx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+      noiseSource.loop = true;
+
+      var noiseFilter = audioCtx.createBiquadFilter();
+      noiseFilter.type = 'lowpass';
+      noiseFilter.frequency.value = 420;
+      noiseFilter.Q.value = 0.7;
+
+      noiseGain = audioCtx.createGain();
+      noiseGain.gain.value = 0.0001;
+
+      pulseOsc = audioCtx.createOscillator();
+      pulseOsc.type = 'sine';
+      pulseOsc.frequency.value = 1.15;
+      var pulseDepth = audioCtx.createGain();
+      pulseDepth.gain.value = 0.014;
+
+      pulseOsc.connect(pulseDepth);
+      pulseDepth.connect(noiseGain.gain);
+
+      noiseSource.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(audioCtx.destination);
+
+      noiseSource.start();
+      pulseOsc.start();
+
+      var t = audioCtx.currentTime;
+      noiseGain.gain.linearRampToValueAtTime(0.05, t + 3.5);
+    }
+
+    function stopContinuousNoise() {
+      soundEnabled = false;
+      if (!audioCtx || !noiseGain) return;
+      var t = audioCtx.currentTime;
+      noiseGain.gain.cancelScheduledValues(t);
+      noiseGain.gain.setValueAtTime(noiseGain.gain.value, t);
+      noiseGain.gain.linearRampToValueAtTime(0.0001, t + 2.6);
+      setTimeout(function () {
+        try { noiseSource.stop(); } catch (e) {}
+        try { pulseOsc.stop(); } catch (e) {}
+      }, 2700);
+    }
+
+    function playTick() {
+      if (!soundEnabled || !audioCtx) return;
+      var t = audioCtx.currentTime;
+      var osc = audioCtx.createOscillator();
+      var g = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 340;
+      g.gain.value = 0.0001;
+      osc.connect(g);
+      g.connect(audioCtx.destination);
+      osc.start(t);
+      g.gain.linearRampToValueAtTime(0.03, t + 0.02);
+      g.gain.linearRampToValueAtTime(0.0001, t + 0.14);
+      osc.stop(t + 0.15);
+    }
+
+    function playHaptic() {
+      if (hapticOff || !window.navigator || !navigator.vibrate) return;
+      navigator.vibrate(15);
+    }
+
+    function revealLead(onDone) {
+      leadText.innerHTML = LEAD_LINES.join('<br>');
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          leadText.classList.add('visible');
+          if (onDone) onDone();
+        });
+      });
+    }
+
+    function applyEffect(item) {
+      switch (item.key) {
+        case 'hearing':
+          stopContinuousNoise();
+          break;
+        case 'color':
+          page.classList.add('desaturated');
+          bgDarkVeil.classList.add('active');
+          grainOverlay.classList.add('active');
+          break;
+        case 'vision':
+          visionVeil.classList.add('active');
+          break;
+        case 'touch':
+          page.classList.add('no-touch-feedback');
+          hapticOff = true;
+          break;
+        case 'language':
+          languageOff = true;
+          break;
+        case 'memory':
+          memoryOff = true;
+          ringNumberWrap.classList.add('fading');
+          break;
+        case 'self':
+          page.classList.add('no-focus-ring');
+          break;
+      }
+    }
+
+    function spawnRipple(x, y, container) {
+      var rect = container.getBoundingClientRect();
+      var el = document.createElement('span');
+      el.className = 'ripple';
+      el.style.left = (x - rect.left) + 'px';
+      el.style.top = (y - rect.top) + 'px';
+      container.appendChild(el);
+      setTimeout(function () { el.remove(); }, 950);
+    }
+
+    function attachTapToggle(toggleRow, onComplete) {
+      var completed = false;
+
+      function trigger(x, y) {
+        if (completed) return;
+        completed = true;
+        onComplete(x, y);
+      }
+
+      toggleRow.addEventListener('click', function (e) {
+        trigger(e.clientX, e.clientY);
+      });
+
+      toggleRow.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          var rect = toggleRow.getBoundingClientRect();
+          trigger(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        }
+      });
+    }
+
+    function renderCard(index) {
+      var item = ITEMS[index];
+      var html = '<div class="item-card" id="itemCard">' +
+        '<div class="illust illust-' + item.img + '" aria-hidden="true"></div>' +
+        '<div class="item-body' + (languageOff ? ' blurred' : '') + '">' +
+        '<div class="item-eyebrow">' + item.title + '</div>' +
+        '<h2 class="item-heading">' + item.heading + '</h2>' +
+        '<p class="item-desc">' + item.body + '</p>' +
+        '</div>' +
+        '<div class="toggle-row" role="switch" aria-checked="true" tabindex="0" aria-label="' +
+        item.title + 'をスリープさせる">' +
+        '<span class="switch-label off" aria-hidden="true">OFF</span>' +
+        '<span class="switch" aria-hidden="true"><span class="knob"></span></span>' +
+        '<span class="switch-label on" aria-hidden="true">ON</span>' +
+        '</div>' +
+        '<div class="card-dark-veil"></div>' +
+        '</div>';
+      cardStage.innerHTML = html;
+
+      var cardEl = document.getElementById('itemCard');
+      var toggleRow = cardEl.querySelector('.toggle-row');
+
+      attachTapToggle(toggleRow, function (x, y) {
+        spawnRipple(x, y, cardEl);
+        completeCurrent(cardEl, toggleRow, index);
+      });
+
+      requestAnimationFrame(function () {
+        cardEl.classList.add('entering');
+      });
+
+      if (item.onShow) {
+        item.onShow({ visionCreep: visionCreep });
+      }
+    }
+
+    function completeCurrent(cardEl, toggleRow, index) {
+      toggleRow.setAttribute('aria-checked', 'false');
+
+      playTick();
+      playHaptic();
+      var item = ITEMS[index];
+      applyEffect(item);
+
+      completedCount += 1;
+      updateRing();
+
+      if (item.key === 'color') {
+        var veil = cardEl.querySelector('.card-dark-veil');
+        if (veil) veil.classList.add('active');
+      }
+
+      cardEl.classList.add('leaving');
+      ringWrap.classList.add('glow');
+      advanceAfterLeave(index);
+    }
+
+    function advanceAfterLeave(index) {
+      setTimeout(function () {
+        ringWrap.classList.remove('glow');
+        if (index + 1 < TOTAL) {
+          renderCard(index + 1);
+        } else {
+          cardStage.innerHTML = '';
+          setTimeout(function () {
+            spawnDialog('スリープしてください');
+          }, 9000);
+          setTimeout(function () {
+            spawnDialog('明日のあなたのためにスリープしてください', '3.2s');
+          }, 9000 + 14000);
+          setTimeout(function () {
+            spawnDialog('明日のためにスリープしてください', '1.4s');
+          }, 9000 + 14000 + 14000);
+        }
+      }, CARD_GAP_MS);
+    }
+
+    revealLead(function () {
+      beginBtn.classList.add('visible');
+    });
+
+    beginBtn.addEventListener('click', function () {
+      startAudio();
+      startScreen.classList.add('leaving');
+      setTimeout(function () {
+        startScreen.hidden = true;
+        ritualScreen.hidden = false;
+        renderCard(0);
+        requestAnimationFrame(function () {
+          ritualScreen.classList.add('entering');
+        });
+      }, 800);
+    });
+  })();
+</script>
