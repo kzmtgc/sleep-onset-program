@@ -53,8 +53,8 @@
     display: flex;
     justify-content: center;
     position: relative;
-    padding: calc(1.6rem + env(safe-area-inset-top)) calc(0.6rem + env(safe-area-inset-right))
-      calc(1.6rem + env(safe-area-inset-bottom)) calc(0.6rem + env(safe-area-inset-left));
+    padding: calc(1.4rem + env(safe-area-inset-top)) calc(0.3rem + env(safe-area-inset-right))
+      calc(1.4rem + env(safe-area-inset-bottom)) calc(0.3rem + env(safe-area-inset-left));
     overflow: hidden;
     overscroll-behavior-y: contain;
     -webkit-user-select: none;
@@ -170,7 +170,7 @@
   #startScreen.leaving { opacity: 0; }
 
   .program-logo {
-    width: 168px;
+    width: min(64vw, 280px);
     height: auto;
     display: block;
     margin: 0 auto;
@@ -180,8 +180,8 @@
   .lead {
     margin: 0;
     text-align: center;
-    font-size: 1.0625rem;
-    line-height: 1.85;
+    font-size: 1.3rem;
+    line-height: 1.8;
     color: var(--label-2);
     max-width: 23em;
     opacity: 0;
@@ -194,13 +194,13 @@
     appearance: none;
     border: none;
     width: 100%;
-    max-width: 20rem;
-    min-height: 50px;
-    border-radius: 25px;
+    max-width: 22rem;
+    min-height: 60px;
+    border-radius: 30px;
     background: var(--accent);
     color: var(--accent-ink);
     font-family: var(--font-sans);
-    font-size: 1.0625rem;
+    font-size: 1.3rem;
     font-weight: 600;
     letter-spacing: 0.01em;
     cursor: pointer;
@@ -222,7 +222,7 @@
   /* ---------- Ritual screen ---------- */
 
   #ritualScreen {
-    gap: 5vh;
+    gap: 1.4rem;
     justify-content: center;
     opacity: 0;
     transition: opacity 0.9s ease;
